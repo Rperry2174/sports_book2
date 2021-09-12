@@ -15,21 +15,32 @@ class ParlaySystem:
     :param target_profit: Goal profit amount
     :param bounds: Tuple of bounds if minimum bet is $1.00 and max is $15.00 then (1, 15)
     """
-    def __init__(self, binaries, target_profit, bounds):
+    def __init__(self, binaries, target_profit, bounds, profit_boost_parlay=-1, profit_boost_multiplier=1):
         self.binaries = binaries
         self.all_parlays = []
         self.target_profit = target_profit
         self.bounds = bounds
+        
+        self.profit_boost_parlay = profit_boost_parlay
+        self.profit_boost_multiplier = profit_boost_multiplier
+
 
         self.create_parlay_system()
 
     def create_parlay_system(self):
         binary_iterations = list(itertools.product(*self.binaries))
 
-        for parlay in binary_iterations:
-            current_parlay = Parlay(money_line_arr=parlay, bet_amount=100)
-            # if current_parlay.implied_prob < 0.12:
-            #     current_parlay.implied_prob = 0
+        # NOTE: 
+        # np.shape(binary_iterations) = (8, 3)
+
+        for i, parlay in enumerate(binary_iterations):
+            if i == self.profit_boost_parlay:
+                current_parlay = Parlay(money_line_arr=parlay, bet_amount=100)
+                current_parlay.update_money_line_odds(new_money_line_odds=(current_parlay.money_line_odds * self.profit_boost_multiplier))
+            else:
+                current_parlay = Parlay(money_line_arr=parlay, bet_amount=100)
+
+
             self.all_parlays.append(current_parlay)
 
         self.all_parlays = sorted(self.all_parlays, key=operator.attrgetter('implied_prob'))
@@ -91,6 +102,7 @@ class ParlaySystem:
         payouts_arr = []
         profits_arr = []
         implied_prob_arr = []
+        overrides_arr = []
 
         for i in range(len(final_val.x)):
             solver_bet_amount = final_val.x[i]
@@ -105,6 +117,7 @@ class ParlaySystem:
             money_line_odds_arr.append(parlay.money_line_odds)
             implied_prob_arr.append(parlay.implied_prob)
             payouts_arr.append(round(parlay.payout, 4))
+            overrides_arr.append(1 if parlay.overrides['money_line_odds'] else 0)
 
             profits_arr.append(round(profit, 3))
 
@@ -115,6 +128,7 @@ class ParlaySystem:
             {decimal_odds_arr}
             {implied_prob_arr}
             {payouts_arr}
+            {overrides_arr}
             {profits_arr}
         ''')
 
@@ -124,6 +138,7 @@ class ParlaySystem:
                            'bet': bets_arr,
                            'implied_prob': implied_prob_arr,
                            'payout': payouts_arr,
+                           'override': overrides_arr,
                            'profit': profits_arr
                             })
 
