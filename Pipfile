@@ -8,11 +8,16 @@ verify_ssl = true
 [packages]
 pulp = "*"
 jupyter = "*"
-psycopg2-binary = "*"
-numpy = "*"
 pandas = "*"
-# scipy = "*"
-# scipy = "*"
+scipy = "*"
+numpy = "*"
+ipykernel = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
+
+# psycopg2-binary = "*"
+# numpy = "*"
+# pandas = "*"
+# scipy = "*"
+# scipy = "*"
